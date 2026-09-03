@@ -49,8 +49,8 @@ def generar_html(fotos, titulo):
     html.append('header { padding: 32px 20px 12px; text-align:center; }')
     html.append('header h1 { margin:0; font-weight:600; letter-spacing:0.5px; }')
     html.append('header p { opacity:0.6; margin-top:6px; font-size:14px; }')
-    html.append('.grid { display:grid; gap:8px; padding:16px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }')
-    html.append('.foto { display:block; overflow:hidden; border-radius:10px; background: var(--card); aspect-ratio: 1/1; }')
+    html.append('.grid { display:grid; gap:4px; padding:8px; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }')
+    html.append('.foto { display:block; overflow:hidden; border-radius:6px; background: var(--card); aspect-ratio: 1/1; }')
     html.append('.foto img { width:100%; height:100%; object-fit:cover; display:block; transition: transform .3s ease; }')
     html.append('.foto:hover img { transform: scale(1.06); }')
     html.append('#lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); align-items:center; justify-content:center; z-index:50; flex-direction:column; }')
@@ -152,13 +152,6 @@ def main():
         ruta_thumb = salida / "photos" / "thumb" / (nombre_base + ".jpg")
         procesar_imagen(archivo, ruta_thumb, TAMANO_MINIATURA, CALIDAD_MINIATURA)
 
-        print("[" + str(i) + "/" + str(len(archivos)) + "] " + archivo.name)
+        
 
-    html_final = generar_html(nombres, args.titulo)
-    (salida / "index.html").write_text(html_final, encoding="utf-8")
-    (salida / ".nojekyll").write_text("")
-    print("Album generado con " + str(len(archivos)) + " fotos.")
-
-
-if __name__ == "__main__":
-    main()
+    
