@@ -1,4 +1,4 @@
-import argparse
+Kim import argparse
 import subprocess
 from pathlib import Path
 from PIL import Image, ImageOps, ImageSequence
@@ -146,7 +146,7 @@ def generar_html(items, titulo):
     html.append('    <button onclick="mover(1)">Siguiente &rarr;</button>')
     html.append('  </div>')
     html.append('</div>')
-    html.append('<footer>Generado con Python</footer>')
+    html.append('<footer>ALADDINDAO</footer>')
     html.append('<script>')
     html.append("var fotos = document.querySelectorAll('.foto');")
     html.append("var lightbox = document.getElementById('lightbox');")
