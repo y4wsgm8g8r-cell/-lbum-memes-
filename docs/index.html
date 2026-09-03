@@ -11,13 +11,14 @@ body { margin:0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; bac
 header { padding: 32px 20px 12px; text-align:center; }
 header h1 { margin:0; font-weight:600; letter-spacing:0.5px; }
 header p { opacity:0.6; margin-top:6px; font-size:14px; }
-.grid { display:grid; gap:8px; padding:16px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
-.foto { display:block; overflow:hidden; border-radius:10px; background: var(--card); aspect-ratio: 1/1; }
+.grid { display:grid; gap:4px; padding:8px; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+.foto { position:relative; display:block; overflow:hidden; border-radius:6px; background: var(--card); aspect-ratio: 1/1; }
 .foto img { width:100%; height:100%; object-fit:cover; display:block; transition: transform .3s ease; }
 .foto:hover img { transform: scale(1.06); }
+.play { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:26px; color:#fff; text-shadow:0 0 8px rgba(0,0,0,0.85); pointer-events:none; }
 #lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); align-items:center; justify-content:center; z-index:50; flex-direction:column; }
 #lightbox.abierto { display:flex; }
-#lightbox img { max-width:92vw; max-height:82vh; border-radius:8px; }
+#lightbox-content img, #lightbox-content video { max-width:92vw; max-height:82vh; border-radius:8px; }
 .controles { margin-top:16px; display:flex; gap:24px; }
 .controles button { background:none; border:1px solid #555; color:var(--text); font-size:16px; padding:8px 18px; border-radius:20px; cursor:pointer; }
 .controles button:hover { border-color: var(--accent); color: var(--accent); }
@@ -28,25 +29,46 @@ footer { text-align:center; padding:24px; opacity:0.4; font-size:12px; }
 <body>
 <header>
   <h1>Mi Álbum</h1>
-  <p>4 fotos</p>
+  <p>11 elementos</p>
 </header>
 <div class="grid">
-      <a href="photos/full/foto_0001.jpg" class="foto" data-index="0">
-        <img src="photos/thumb/foto_0001.jpg" alt="Foto 1" loading="lazy">
+      <a href="photos/full/item_0001.jpg" class="foto" data-index="0" data-tipo="imagen">
+        <img src="photos/thumb/item_0001.jpg" alt="Elemento 1" loading="lazy">
       </a>
-      <a href="photos/full/foto_0002.jpg" class="foto" data-index="1">
-        <img src="photos/thumb/foto_0002.jpg" alt="Foto 2" loading="lazy">
+      <a href="photos/full/item_0002.jpg" class="foto" data-index="1" data-tipo="imagen">
+        <img src="photos/thumb/item_0002.jpg" alt="Elemento 2" loading="lazy">
       </a>
-      <a href="photos/full/foto_0003.jpg" class="foto" data-index="2">
-        <img src="photos/thumb/foto_0003.jpg" alt="Foto 3" loading="lazy">
+      <a href="photos/full/item_0003.jpg" class="foto" data-index="2" data-tipo="imagen">
+        <img src="photos/thumb/item_0003.jpg" alt="Elemento 3" loading="lazy">
       </a>
-      <a href="photos/full/foto_0004.jpg" class="foto" data-index="3">
-        <img src="photos/thumb/foto_0004.jpg" alt="Foto 4" loading="lazy">
+      <a href="photos/full/item_0004.jpg" class="foto" data-index="3" data-tipo="imagen">
+        <img src="photos/thumb/item_0004.jpg" alt="Elemento 4" loading="lazy">
+      </a>
+      <a href="photos/full/item_0005.jpg" class="foto" data-index="4" data-tipo="imagen">
+        <img src="photos/thumb/item_0005.jpg" alt="Elemento 5" loading="lazy">
+      </a>
+      <a href="photos/full/item_0006.jpg" class="foto" data-index="5" data-tipo="imagen">
+        <img src="photos/thumb/item_0006.jpg" alt="Elemento 6" loading="lazy">
+      </a>
+      <a href="photos/full/item_0007.jpg" class="foto" data-index="6" data-tipo="imagen">
+        <img src="photos/thumb/item_0007.jpg" alt="Elemento 7" loading="lazy">
+      </a>
+      <a href="photos/full/item_0008.jpg" class="foto" data-index="7" data-tipo="imagen">
+        <img src="photos/thumb/item_0008.jpg" alt="Elemento 8" loading="lazy">
+      </a>
+      <a href="photos/full/item_0009.jpg" class="foto" data-index="8" data-tipo="imagen">
+        <img src="photos/thumb/item_0009.jpg" alt="Elemento 9" loading="lazy">
+      </a>
+      <a href="photos/full/item_0010.jpg" class="foto" data-index="9" data-tipo="imagen">
+        <img src="photos/thumb/item_0010.jpg" alt="Elemento 10" loading="lazy">
+      </a>
+      <a href="photos/full/item_0011.jpg" class="foto" data-index="10" data-tipo="imagen">
+        <img src="photos/thumb/item_0011.jpg" alt="Elemento 11" loading="lazy">
       </a>
 </div>
 <div id="lightbox">
   <span class="cerrar" onclick="cerrar()">&times;</span>
-  <img id="lightbox-img" src="" alt="">
+  <div id="lightbox-content"></div>
   <div class="controles">
     <button onclick="mover(-1)">&larr; Anterior</button>
     <button onclick="mover(1)">Siguiente &rarr;</button>
@@ -56,7 +78,7 @@ footer { text-align:center; padding:24px; opacity:0.4; font-size:12px; }
 <script>
 var fotos = document.querySelectorAll('.foto');
 var lightbox = document.getElementById('lightbox');
-var lightboxImg = document.getElementById('lightbox-img');
+var lightboxContent = document.getElementById('lightbox-content');
 var actual = 0;
 fotos.forEach(function(a) {
   a.addEventListener('click', function(e) {
@@ -66,11 +88,19 @@ fotos.forEach(function(a) {
   });
 });
 function abrir() {
-  lightboxImg.src = fotos[actual].getAttribute('href');
+  var a = fotos[actual];
+  var tipo = a.dataset.tipo;
+  var src = a.getAttribute('href');
+  if (tipo === 'video') {
+    lightboxContent.innerHTML = '<video src="' + src + '" controls autoplay></video>';
+  } else {
+    lightboxContent.innerHTML = '<img src="' + src + '">';
+  }
   lightbox.classList.add('abierto');
 }
 function cerrar() {
   lightbox.classList.remove('abierto');
+  lightboxContent.innerHTML = '';
 }
 function mover(delta) {
   actual = (actual + delta + fotos.length) % fotos.length;
