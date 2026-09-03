@@ -111,7 +111,7 @@ def generar_html(items, titulo):
     html.append('<style>')
     html.append(':root { --bg:#111; --card:#1b1b1b; --text:#f2f2f2; --accent:#e8b04b; }')
     html.append('* { box-sizing: border-box; }')
-    html.append('body { margin:0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }')
+    html.append('body { margin:0; min-height:100vh; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: linear-gradient(135deg, #1e3a8a, #7f1d1d) fixed; color: var(--text); }')
     html.append('header { padding: 32px 20px 12px; text-align:center; }')
     html.append('header h1 { margin:0; font-weight:600; letter-spacing:0.5px; }')
     html.append('header p { opacity:0.6; margin-top:6px; font-size:14px; }')
@@ -127,7 +127,6 @@ def generar_html(items, titulo):
     html.append('.controles button { background:none; border:1px solid #555; color:var(--text); font-size:16px; padding:8px 18px; border-radius:20px; cursor:pointer; }')
     html.append('.controles button:hover { border-color: var(--accent); color: var(--accent); }')
     html.append('.cerrar { position:absolute; top:20px; right:24px; font-size:28px; cursor:pointer; }')
-    html.append('footer { text-align:center; padding:24px; opacity:0.4; font-size:12px; }')
     html.append('</style>')
     html.append('</head>')
     html.append('<body>')
@@ -146,7 +145,6 @@ def generar_html(items, titulo):
     html.append('    <button onclick="mover(1)">Siguiente &rarr;</button>')
     html.append('  </div>')
     html.append('</div>')
-    html.append('<footer>ALADDINDAO</footer>')
     html.append('<script>')
     html.append("var fotos = document.querySelectorAll('.foto');")
     html.append("var lightbox = document.getElementById('lightbox');")
@@ -247,7 +245,7 @@ def main():
     html_final = generar_html(items, args.titulo)
     (salida / "index.html").write_text(html_final, encoding="utf-8")
     (salida / ".nojekyll").write_text("")
-    
+    print("Album generado con " + str(len(archivos)) + " elementos.")
 
 
 if __name__ == "__main__":
