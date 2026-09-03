@@ -247,7 +247,7 @@ def main():
     html_final = generar_html(items, args.titulo)
     (salida / "index.html").write_text(html_final, encoding="utf-8")
     (salida / ".nojekyll").write_text("")
-    print("Album generado con " + str(len(archivos)) + " elementos.")
+    
 
 
 if __name__ == "__main__":
