@@ -1,12 +1,21 @@
 import argparse
+import subprocess
 from pathlib import Path
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageSequence
 
-EXTENSIONES_VALIDAS = {".jpg", ".jpeg", ".png", ".webp", ".heic"}
+EXT_IMAGEN = {".jpg", ".jpeg", ".png", ".webp", ".heic"}
+EXT_GIF = {".gif"}
+EXT_VIDEO = {".mp4", ".mov", ".m4v", ".avi", ".webm"}
+
 TAMANO_GRANDE = 1600
 TAMANO_MINIATURA = 420
 CALIDAD_GRANDE = 82
 CALIDAD_MINIATURA = 75
+
+TAMANO_GIF_GRANDE = 700
+TAMANO_GIF_MINIATURA = 300
+
+ANCHO_VIDEO = 960
 
 
 def procesar_imagen(ruta_origen, ruta_destino, tamano_max, calidad):
@@ -15,24 +24,81 @@ def procesar_imagen(ruta_origen, ruta_destino, tamano_max, calidad):
         img = img.convert("RGB")
         img.thumbnail((tamano_max, tamano_max), Image.LANCZOS)
         ruta_destino.parent.mkdir(parents=True, exist_ok=True)
-        img.save(
-            ruta_destino,
-            "JPEG",
-            quality=calidad,
-            optimize=True,
-        )
+        img.save(ruta_destino, "JPEG", quality=calidad, optimize=True)
 
 
-def generar_html(fotos, titulo):
+def procesar_gif(ruta_origen, ruta_destino, tamano_max):
+    ruta_destino.parent.mkdir(parents=True, exist_ok=True)
+    with Image.open(ruta_origen) as img:
+        duracion = img.info.get("duration", 100)
+        frames = []
+        for frame in ImageSequence.Iterator(img):
+            f = frame.convert("RGBA")
+            f.thumbnail((tamano_max, tamano_max), Image.LANCZOS)
+            frames.append(f)
+        if frames:
+            frames[0].save(
+                ruta_destino,
+                save_all=True,
+                append_images=frames[1:],
+                duration=duracion,
+                loop=0,
+                optimize=True,
+            )
+
+
+def procesar_video(ruta_origen, ruta_destino_video, ruta_destino_poster):
+    ruta_destino_video.parent.mkdir(parents=True, exist_ok=True)
+    ruta_destino_poster.parent.mkdir(parents=True, exist_ok=True)
+
+    subprocess.run(
+        [
+            "ffmpeg", "-y", "-i", str(ruta_origen),
+            "-vf", "scale=" + str(ANCHO_VIDEO) + ":-2",
+            "-c:v", "libx264", "-crf", "28", "-preset", "veryfast",
+            "-c:a", "aac", "-b:a", "96k",
+            str(ruta_destino_video),
+        ],
+        check=True,
+    )
+
+    subprocess.run(
+        [
+            "ffmpeg", "-y", "-i", str(ruta_origen),
+            "-ss", "00:00:00.3", "-vframes", "1", "-update", "1",
+            str(ruta_destino_poster),
+        ],
+        check=True,
+    )
+
+    with Image.open(ruta_destino_poster) as img:
+        img = img.convert("RGB")
+        img.thumbnail((TAMANO_MINIATURA, TAMANO_MINIATURA), Image.LANCZOS)
+        img.save(ruta_destino_poster, "JPEG", quality=CALIDAD_MINIATURA, optimize=True)
+
+
+def generar_html(items, titulo):
     partes = []
-    for i, f in enumerate(fotos):
-        partes.append(
-            '      <a href="photos/full/' + f + '.jpg" class="foto" data-index="'
-            + str(i) + '">\n'
-            + '        <img src="photos/thumb/' + f + '.jpg" alt="Foto '
-            + str(i + 1) + '" loading="lazy">\n'
-            + '      </a>'
-        )
+    for i, item in enumerate(items):
+        nombre = item["nombre"]
+        tipo = item["tipo"]
+        ext = item["ext"]
+
+        if tipo == "video":
+            partes.append(
+                '      <a href="photos/full/' + nombre + '.mp4" class="foto" data-index="'
+                + str(i) + '" data-tipo="video">\n'
+                + '        <img src="photos/thumb/' + nombre + '.jpg" alt="Video ' + str(i + 1) + '" loading="lazy">\n'
+                + '        <span class="play">&#9658;</span>\n'
+                + '      </a>'
+            )
+        else:
+            partes.append(
+                '      <a href="photos/full/' + nombre + '.' + ext + '" class="foto" data-index="'
+                + str(i) + '" data-tipo="' + tipo + '">\n'
+                + '        <img src="photos/thumb/' + nombre + '.' + ext + '" alt="Elemento ' + str(i + 1) + '" loading="lazy">\n'
+                + '      </a>'
+            )
     tarjetas = "\n".join(partes)
 
     html = []
@@ -50,12 +116,13 @@ def generar_html(fotos, titulo):
     html.append('header h1 { margin:0; font-weight:600; letter-spacing:0.5px; }')
     html.append('header p { opacity:0.6; margin-top:6px; font-size:14px; }')
     html.append('.grid { display:grid; gap:4px; padding:8px; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }')
-    html.append('.foto { display:block; overflow:hidden; border-radius:6px; background: var(--card); aspect-ratio: 1/1; }')
+    html.append('.foto { position:relative; display:block; overflow:hidden; border-radius:6px; background: var(--card); aspect-ratio: 1/1; }')
     html.append('.foto img { width:100%; height:100%; object-fit:cover; display:block; transition: transform .3s ease; }')
     html.append('.foto:hover img { transform: scale(1.06); }')
+    html.append('.play { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:26px; color:#fff; text-shadow:0 0 8px rgba(0,0,0,0.85); pointer-events:none; }')
     html.append('#lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); align-items:center; justify-content:center; z-index:50; flex-direction:column; }')
     html.append('#lightbox.abierto { display:flex; }')
-    html.append('#lightbox img { max-width:92vw; max-height:82vh; border-radius:8px; }')
+    html.append('#lightbox-content img, #lightbox-content video { max-width:92vw; max-height:82vh; border-radius:8px; }')
     html.append('.controles { margin-top:16px; display:flex; gap:24px; }')
     html.append('.controles button { background:none; border:1px solid #555; color:var(--text); font-size:16px; padding:8px 18px; border-radius:20px; cursor:pointer; }')
     html.append('.controles button:hover { border-color: var(--accent); color: var(--accent); }')
@@ -66,14 +133,14 @@ def generar_html(fotos, titulo):
     html.append('<body>')
     html.append('<header>')
     html.append('  <h1>' + titulo + '</h1>')
-    html.append('  <p>' + str(len(fotos)) + ' fotos</p>')
+    html.append('  <p>' + str(len(items)) + ' elementos</p>')
     html.append('</header>')
     html.append('<div class="grid">')
     html.append(tarjetas)
     html.append('</div>')
     html.append('<div id="lightbox">')
     html.append('  <span class="cerrar" onclick="cerrar()">&times;</span>')
-    html.append('  <img id="lightbox-img" src="" alt="">')
+    html.append('  <div id="lightbox-content"></div>')
     html.append('  <div class="controles">')
     html.append('    <button onclick="mover(-1)">&larr; Anterior</button>')
     html.append('    <button onclick="mover(1)">Siguiente &rarr;</button>')
@@ -83,7 +150,7 @@ def generar_html(fotos, titulo):
     html.append('<script>')
     html.append("var fotos = document.querySelectorAll('.foto');")
     html.append("var lightbox = document.getElementById('lightbox');")
-    html.append("var lightboxImg = document.getElementById('lightbox-img');")
+    html.append("var lightboxContent = document.getElementById('lightbox-content');")
     html.append('var actual = 0;')
     html.append('fotos.forEach(function(a) {')
     html.append("  a.addEventListener('click', function(e) {")
@@ -93,11 +160,19 @@ def generar_html(fotos, titulo):
     html.append('  });')
     html.append('});')
     html.append('function abrir() {')
-    html.append("  lightboxImg.src = fotos[actual].getAttribute('href');")
+    html.append('  var a = fotos[actual];')
+    html.append("  var tipo = a.dataset.tipo;")
+    html.append("  var src = a.getAttribute('href');")
+    html.append("  if (tipo === 'video') {")
+    html.append('    lightboxContent.innerHTML = \'<video src="\' + src + \'" controls autoplay></video>\';')
+    html.append('  } else {')
+    html.append('    lightboxContent.innerHTML = \'<img src="\' + src + \'">\';')
+    html.append('  }')
     html.append("  lightbox.classList.add('abierto');")
     html.append('}')
     html.append('function cerrar() {')
     html.append("  lightbox.classList.remove('abierto');")
+    html.append("  lightboxContent.innerHTML = '';")
     html.append('}')
     html.append('function mover(delta) {')
     html.append('  actual = (actual + delta + fotos.length) % fotos.length;')
@@ -129,29 +204,51 @@ def main():
     entrada = Path(args.input)
     salida = Path(args.output)
 
+    todas_ext = EXT_IMAGEN | EXT_GIF | EXT_VIDEO
     archivos = []
     for p in sorted(entrada.iterdir()):
-        if p.suffix.lower() in EXTENSIONES_VALIDAS:
+        if p.suffix.lower() in todas_ext:
             archivos.append(p)
 
     if not archivos:
-        print("No se encontraron fotos.")
+        print("No se encontraron fotos, gifs ni videos.")
         return
 
     (salida / "photos" / "full").mkdir(parents=True, exist_ok=True)
     (salida / "photos" / "thumb").mkdir(parents=True, exist_ok=True)
 
-    nombres = []
+    items = []
     for i, archivo in enumerate(archivos, 1):
-        nombre_base = "foto_" + str(i).zfill(4)
-        nombres.append(nombre_base)
+        ext = archivo.suffix.lower()
+        nombre_base = "item_" + str(i).zfill(4)
 
-        ruta_full = salida / "photos" / "full" / (nombre_base + ".jpg")
-        procesar_imagen(archivo, ruta_full, TAMANO_GRANDE, CALIDAD_GRANDE)
+        if ext in EXT_IMAGEN:
+            ruta_full = salida / "photos" / "full" / (nombre_base + ".jpg")
+            ruta_thumb = salida / "photos" / "thumb" / (nombre_base + ".jpg")
+            procesar_imagen(archivo, ruta_full, TAMANO_GRANDE, CALIDAD_GRANDE)
+            procesar_imagen(archivo, ruta_thumb, TAMANO_MINIATURA, CALIDAD_MINIATURA)
+            items.append({"nombre": nombre_base, "tipo": "imagen", "ext": "jpg"})
 
-        ruta_thumb = salida / "photos" / "thumb" / (nombre_base + ".jpg")
-        procesar_imagen(archivo, ruta_thumb, TAMANO_MINIATURA, CALIDAD_MINIATURA)
+        elif ext in EXT_GIF:
+            ruta_full = salida / "photos" / "full" / (nombre_base + ".gif")
+            ruta_thumb = salida / "photos" / "thumb" / (nombre_base + ".gif")
+            procesar_gif(archivo, ruta_full, TAMANO_GIF_GRANDE)
+            procesar_gif(archivo, ruta_thumb, TAMANO_GIF_MINIATURA)
+            items.append({"nombre": nombre_base, "tipo": "gif", "ext": "gif"})
 
-        
+        elif ext in EXT_VIDEO:
+            ruta_full = salida / "photos" / "full" / (nombre_base + ".mp4")
+            ruta_thumb = salida / "photos" / "thumb" / (nombre_base + ".jpg")
+            procesar_video(archivo, ruta_full, ruta_thumb)
+            items.append({"nombre": nombre_base, "tipo": "video", "ext": "mp4"})
 
-    
+        print("[" + str(i) + "/" + str(len(archivos)) + "] " + archivo.name)
+
+    html_final = generar_html(items, args.titulo)
+    (salida / "index.html").write_text(html_final, encoding="utf-8")
+    (salida / ".nojekyll").write_text("")
+    print("Album generado con " + str(len(archivos)) + " elementos.")
+
+
+if __name__ == "__main__":
+    main()
