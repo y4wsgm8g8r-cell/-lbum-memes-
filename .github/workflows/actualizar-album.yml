@@ -17,9 +17,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+           - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: pip install pillow
-      - run: python generar_album.py --input fotos_originales --output docs --titulo "Mi Álbum"
-      - uses: stefanzweifel/git-auto-commit-action@v5
+
+     - uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Actualizar álbum automáticamente"
           file_pattern: docs/**
