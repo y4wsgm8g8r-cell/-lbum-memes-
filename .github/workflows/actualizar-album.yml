@@ -1,0 +1,25 @@
+name: Generar álbum de fotos
+
+on:
+  push:
+    paths:
+      - 'fotos_originales/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install pillow
+      - run: python generar_album.py --input fotos_originales --output docs --titulo "Mi Álbum"
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Actualizar álbum automáticamente"
+          file_pattern: docs/**
