@@ -9,7 +9,6 @@
 * { box-sizing: border-box; }
 body { margin:0; min-height:100vh; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: linear-gradient(135deg, #1e3a8a, #7f1d1d) fixed; color: var(--text); }
 header { padding: 32px 20px 12px; text-align:center; }
-header h1 { margin:0; font-weight:600; letter-spacing:0.5px; }
 header p { opacity:0.6; margin-top:6px; font-size:14px; }
 .grid { display:grid; gap:4px; padding:8px; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
 .foto { position:relative; display:block; overflow:hidden; border-radius:6px; background: var(--card); aspect-ratio: 1/1; }
@@ -23,11 +22,12 @@ header p { opacity:0.6; margin-top:6px; font-size:14px; }
 .controles button { background:none; border:1px solid #555; color:var(--text); font-size:16px; padding:8px 18px; border-radius:20px; cursor:pointer; }
 .controles button:hover { border-color: var(--accent); color: var(--accent); }
 .cerrar { position:absolute; top:20px; right:24px; font-size:28px; cursor:pointer; }
+.logo { max-width:180px; width:55%; height:auto; display:block; margin:0 auto; }
 </style>
 </head>
 <body>
 <header>
-  <h1>MEMES & IMAGES BY METAFXN</h1>
+  <img src="logo.png" alt="MEMES & IMAGES BY METAFXN" class="logo">
   <p>233 elementos</p>
 </header>
 <div class="grid">
