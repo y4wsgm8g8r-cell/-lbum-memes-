@@ -131,7 +131,7 @@ def generar_html(items, titulo):
     html.append('</head>')
     html.append('<body>')
     html.append('<header>')
-    html.append('  <img src="logo.png" alt="' + titulo + '" class="logo">')
+    html.append('  <img src="logo.PNG" alt="' + titulo + '" class="logo">')
     html.append('  <p>' + str(len(items)) + ' elementos</p>')
     html.append('</header>')
     html.append('<div class="grid">')
